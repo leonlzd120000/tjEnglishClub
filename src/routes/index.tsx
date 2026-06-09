@@ -282,8 +282,8 @@ const CELEBRATION_PLAYBACK_SPEED =
 const ROLE_SPEAKER_MIN_VISIBLE_MS = 700;
 const ROLE_RESPONSE_PLAY_DELAY_MS = 480;
 const APP_FRAME_MAX_WIDTH_CLASS = "max-w-[1124px]";
-const MATCH_BOX_WIDTH_CLASS = "w-[228px] shrink-0";
-const READ_SENTENCE_BOX_WIDTH_CLASS = "w-[460px] max-w-full";
+const MATCH_BOX_WIDTH_CLASS = "w-[196px] shrink-0";
+const READ_SENTENCE_BOX_WIDTH_CLASS = "w-[360px] xl:w-[460px] max-w-full";
 
 const DEFAULT_PAIRS: Pair[] = [
   { id: "1", label: "flowers", answer: "pink" },
@@ -1178,9 +1178,7 @@ function WorkspaceShell({
               </div>
             </label>
 
-            {/* Big playful title with mascot */}
             <div className="flex items-center gap-3">
-              <div className="text-5xl drop-shadow-md">🦉</div>
               <h1>
                 <button
                   type="button"
@@ -1190,7 +1188,6 @@ function WorkspaceShell({
                   {title || defaultTitle}
                 </button>
               </h1>
-              <div className="hidden text-3xl opacity-70 sm:block">✏️</div>
             </div>
           </div>
 
@@ -1243,7 +1240,7 @@ function RolePlayRoleSelector({
       aria-pressed={isActive}
       aria-label={`Role panel for ${selectedRole}`}
       onClick={onActivate}
-      className={`relative w-[300px] max-w-full shrink-0 overflow-hidden rounded-3xl border-4 px-4 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4FC3F7]/40 ${
+      className={`relative w-[220px] max-w-full shrink-0 overflow-hidden rounded-3xl border-4 px-4 py-3 text-left transition-all xl:w-[300px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4FC3F7]/40 ${
         isActive
           ? "z-10 -translate-y-0.5 border-[#FF8A65] bg-gradient-to-br from-[#FFF3D9] via-[#FFE082] to-[#FFCC80] shadow-[0_0_0_6px_rgba(255,138,101,0.25),0_14px_28px_rgba(0,0,0,0.12)]"
           : "border-[#FFCC80] bg-white/90 opacity-75 grayscale-[0.2] hover:-translate-y-0.5 hover:border-[#FFD54F] hover:opacity-100 hover:grayscale-0 shadow-sm"
@@ -1304,11 +1301,6 @@ function WorkspaceMenu({
   return (
     <aside className="border-b-4 border-[#FFCC80] bg-[#FFF3D9]/80 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-[224px] lg:shrink-0 lg:border-b-0 lg:border-r-4">
       <div className="px-4 py-5 lg:px-4 lg:pb-8 lg:pt-[108px]">
-        <div className="mb-3 flex items-center gap-2 px-1">
-          <span className="text-2xl">🌟</span>
-          <span className="font-extrabold text-[#FF8A65] tracking-wider text-sm">LET'S PLAY!</span>
-        </div>
-
         <div className="rounded-3xl border-4 border-[#FFCC80] bg-white p-3 shadow-[0_8px_0_#FFE082] fun-shadow">
           <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             {WORKSPACES.map((workspace, index) => {
@@ -1338,10 +1330,6 @@ function WorkspaceMenu({
               );
             })}
           </nav>
-        </div>
-
-        <div className="mt-6 hidden px-2 text-center text-[10px] font-bold uppercase tracking-widest text-[#C9A26B] lg:block">
-          Elementary English<br />Adventure
         </div>
       </div>
     </aside>
@@ -2356,20 +2344,20 @@ function GameView({
 
       {/* Main cartoon play area */}
       <div
-        className={`cartoon-card flex overflow-hidden border-[#FFCC80] bg-white/90 p-7 ${
+        className={`cartoon-card flex border-[#FFCC80] bg-white/90 p-7 ${
           showPairBoard ? "min-h-[380px] items-stretch gap-6" : "items-center justify-center"
         }`}
       >
         <div
           className={
             showPairBoard && showDropTargets
-              ? "flex h-[260px] w-[36%] max-w-[360px] min-w-0 shrink-0 items-stretch justify-center overflow-hidden"
+              ? "flex h-[260px] w-[32%] max-w-[300px] min-w-0 shrink-0 items-stretch justify-center overflow-hidden"
               : `flex shrink-0 items-stretch justify-center ${
                   isMultiImageRow
                     ? "w-full"
                     : showPairBoard
                       ? showTargetSentence && !showRoleSelectors
-                        ? "w-[320px]"
+                        ? "w-[250px] xl:w-[320px]"
                         : showRoleSelectors
                           ? "w-[300px]"
                           : "w-56"
@@ -2448,7 +2436,7 @@ function GameView({
         {showPairBoard &&
           (showRoleSelectors && roleSelection ? (
             <div className="flex min-w-0 flex-1 flex-col">
-              <div className="mb-4 flex items-center justify-between gap-4">
+              <div className="mb-4 flex min-w-0 items-center justify-between gap-4 overflow-hidden">
                 {[0, 1].map((columnIndex) => (
                   <RolePlayRoleSelector
                     key={`role-selector-${columnIndex}`}
@@ -2482,13 +2470,15 @@ function GameView({
                         : labelSelected
                           ? "border-amber-500 bg-amber-100 text-slate-800 shadow-sm"
                           : "border-slate-700 bg-white text-slate-800";
-                  const labelBoxClassName = `inline-flex min-h-14 w-[300px] max-w-full shrink-0 items-center rounded-md border-2 px-4 py-3 text-left text-lg font-bold leading-snug transition ${labelColorClass} cursor-pointer hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400`;
+                  const labelBoxClassName = `inline-flex min-h-14 w-[260px] max-w-full shrink-0 items-center rounded-md border-2 px-4 py-3 text-left text-base font-bold leading-snug transition xl:w-[300px] xl:text-lg ${labelColorClass} cursor-pointer hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400`;
 
                   return (
                     <div
                       key={p.id}
                       className={`flex min-h-[64px] min-w-0 items-center ${
-                        columnIndex === 0 ? "justify-start pr-[42%]" : "justify-end pl-[42%]"
+                        columnIndex === 0
+                          ? "justify-start pr-[28%] xl:pr-[42%]"
+                          : "justify-end pl-[28%] xl:pl-[42%]"
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -2537,11 +2527,11 @@ function GameView({
             <div
               className={`min-w-0 flex-1 ${
                 showDropTargets
-                  ? "flex h-[260px] items-start justify-start overflow-hidden"
+                  ? "flex h-[260px] items-start justify-start"
                   : ""
               } ${
                 showTargetSentence && !showDropTargets && !showRoleSelectors
-                  ? "items-end overflow-hidden"
+                  ? "items-end"
                   : ""
               } ${sentenceColumns === 2 ? "grid grid-cols-2 gap-4" : "flex flex-col gap-3"}`}
             >
@@ -2580,10 +2570,10 @@ function GameView({
                               : "border-slate-700 bg-white text-slate-800";
                       const labelBoxClassName = `border-2 rounded-md px-4 font-bold flex items-center transition ${labelColorClass} ${
                         showDropTargets
-                          ? "h-full w-[228px] shrink-0 whitespace-nowrap"
+                          ? "h-full w-[196px] shrink-0 whitespace-nowrap"
                           : `min-h-16 py-3 text-left leading-snug ${
                               showTargetSentence
-                                ? `h-full ${READ_SENTENCE_BOX_WIDTH_CLASS} text-2xl whitespace-normal break-words`
+                                ? `h-full ${READ_SENTENCE_BOX_WIDTH_CLASS} text-xl xl:text-2xl whitespace-normal break-words`
                                 : "w-full max-w-[560px]"
                             }`
                       } ${
@@ -2597,7 +2587,7 @@ function GameView({
                           key={p.id}
                           className={
                             showDropTargets
-                              ? "grid grid-cols-[228px_28px_228px] items-center gap-3"
+                              ? "grid grid-cols-[196px_24px_196px] items-center gap-2"
                               : `flex min-w-0 items-center gap-3 ${
                                   showTargetSentence ? "w-full justify-end" : ""
                                 }`
