@@ -1,0 +1,193 @@
+/* Elementary school cartoon English theme - bright, playful, friendly */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Comic+Neue:wght@400;700&display=swap');
+
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 1.25rem; /* Bubblier cartoon radii */
+  --background: #FFF8E7; /* Warm creamy yellow - like notebook paper */
+  --foreground: #2F2A1F; /* Dark brown for readability */
+  --card: #FFFFFF;
+  --card-foreground: #2F2A1F;
+  --popover: #FFFFFF;
+  --popover-foreground: #2F2A1F;
+  /* Playful primary: bright sky blue */
+  --primary: #4FC3F7;
+  --primary-foreground: #FFFFFF;
+  /* Cheerful accents */
+  --secondary: #FFE082; /* Sunny yellow */
+  --secondary-foreground: #3E2A1F;
+  --muted: #FFF3D9;
+  --muted-foreground: #6B5C4A;
+  --accent: #FF8A65; /* Coral orange */
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF6B6B;
+  --destructive-foreground: #FFFFFF;
+  --border: #FFCC80;
+  --input: #FFF8E1;
+  --ring: #4FC3F7;
+  --chart-1: #FF8A65;
+  --chart-2: #4FC3F7;
+  --chart-3: #81C784;
+  --chart-4: #BA68C8;
+  --chart-5: #FFD54F;
+  --sidebar: #FFF3D9;
+  --sidebar-foreground: #2F2A1F;
+  --sidebar-primary: #4FC3F7;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FFE082;
+  --sidebar-accent-foreground: #3E2A1F;
+  --sidebar-border: #FFCC80;
+  --sidebar-ring: #4FC3F7;
+}
+
+.dark {
+  /* Fun dark mode for late night learning - still playful */
+  --background: #2C2A3A;
+  --foreground: #FFF8E7;
+  --card: #3C394D;
+  --card-foreground: #FFF8E7;
+  --popover: #3C394D;
+  --popover-foreground: #FFF8E7;
+  --primary: #7DD3FC;
+  --primary-foreground: #2C2A3A;
+  --secondary: #FCD34D;
+  --secondary-foreground: #2C2A3A;
+  --muted: #4A475C;
+  --muted-foreground: #C8BFA8;
+  --accent: #FB923C;
+  --accent-foreground: #2C2A3A;
+  --destructive: #F87171;
+  --destructive-foreground: #FFF8E7;
+  --border: #6B5F4A;
+  --input: #4A475C;
+  --ring: #7DD3FC;
+  --chart-1: #FB923C;
+  --chart-2: #7DD3FC;
+  --chart-3: #86EFAC;
+  --chart-4: #C084FC;
+  --chart-5: #FCD34D;
+  --sidebar: #3C394D;
+  --sidebar-foreground: #FFF8E7;
+  --sidebar-primary: #7DD3FC;
+  --sidebar-primary-foreground: #2C2A3A;
+  --sidebar-accent: #FCD34D;
+  --sidebar-accent-foreground: #2C2A3A;
+  --sidebar-border: #6B5F4A;
+  --sidebar-ring: #7DD3FC;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: 'Fredoka', 'Comic Neue', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Cartoon kid-friendly base styles */
+  h1, h2, h3, .cartoon-title {
+    font-family: 'Fredoka', 'Comic Neue', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  .cartoon-card {
+    border-radius: 2rem;
+    border-width: 4px;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  .cartoon-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .cartoon-button {
+    font-family: 'Fredoka', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-radius: 9999px;
+    border-width: 3px;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .cartoon-button:hover {
+    transform: scale(1.04) rotate(1deg);
+  }
+
+  .cartoon-button:active {
+    transform: scale(0.96) rotate(-1deg);
+  }
+
+  .fun-shadow {
+    box-shadow: 0 8px 0 #E8B86F, 0 12px 20px -4px rgb(0 0 0 / 0.15);
+  }
+
+  .star {
+    animation: twinkle 1.5s infinite ease-in-out;
+  }
+}
