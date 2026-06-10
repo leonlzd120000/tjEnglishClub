@@ -712,6 +712,7 @@ function useStoredChoice(storageKey: string, defaultValue: string, validValues: 
 }
 
 function useImages(storageKeys: readonly string[], defaultImages?: readonly string[]) {
+  const dynamicStorageKey = `${storageKeys.join("|")}:images`;
   const getDefaultImageAt = useCallback(
     (index: number) => defaultImages?.[index] ?? DEFAULT_IMAGE,
     [defaultImages],
@@ -724,6 +725,14 @@ function useImages(storageKeys: readonly string[], defaultImages?: readonly stri
   useEffect(() => {
     setIsLoaded(false);
     try {
+      const storedImages = localStorage.getItem(dynamicStorageKey);
+      if (storedImages) {
+        const parsedImages = JSON.parse(storedImages) as string[];
+        setImages(parsedImages.length ? parsedImages : storageKeys.map((_, index) => getDefaultImageAt(index)));
+        setIsLoaded(true);
+        return;
+      }
+
       setImages(
         storageKeys.map((storageKey, index) => {
           const storedImage = localStorage.getItem(storageKey);
@@ -737,11 +746,12 @@ function useImages(storageKeys: readonly string[], defaultImages?: readonly stri
       setImages(storageKeys.map((_, index) => getDefaultImageAt(index)));
     }
     setIsLoaded(true);
-  }, [getDefaultImageAt, storageKeys]);
+  }, [dynamicStorageKey, getDefaultImageAt, storageKeys]);
 
   useEffect(() => {
     if (!isLoaded) return;
     try {
+      localStorage.setItem(dynamicStorageKey, JSON.stringify(images));
       storageKeys.forEach((storageKey, index) => {
         const defaultImage = getDefaultImageAt(index);
         const image = images[index] || defaultImage;
@@ -751,7 +761,7 @@ function useImages(storageKeys: readonly string[], defaultImages?: readonly stri
     } catch (error) {
       void error;
     }
-  }, [getDefaultImageAt, images, isLoaded, storageKeys]);
+  }, [dynamicStorageKey, getDefaultImageAt, images, isLoaded, storageKeys]);
 
   return [images, setImages] as const;
 }
@@ -1098,8 +1108,7 @@ function WorkspacePage({
   );
 
   useEffect(() => {
-    const targetCount =
-      workspace.imageLayout === "row4" ? workspace.imageKeys.length : effectiveFixedPairCount;
+    const targetCount = effectiveFixedPairCount;
     if (!targetCount) return;
 
     setPairs((current) => {
@@ -3172,6 +3181,12 @@ function SettingsView({
   const rolePlaySplitIndex = Math.ceil((fixedPairCount ?? pairs.length) / 2);
   const rolePlayLeftPairs = pairs.slice(0, rolePlaySplitIndex);
   const rolePlayRightPairs = pairs.slice(rolePlaySplitIndex, rolePlaySplitIndex * 2);
+  const rolePlayRows = Array.from({
+    length: Math.max(rolePlayLeftPairs.length, rolePlayRightPairs.length),
+  }).map((_, index) => ({
+    left: rolePlayLeftPairs[index],
+    right: rolePlayRightPairs[index],
+  }));
   const getDefaultImageAt = (index: number) => defaultImages?.[index] ?? DEFAULT_IMAGE;
 
   const update = (id: string, field: "label" | "answer", value: string) => {
@@ -3179,6 +3194,43 @@ function SettingsView({
   };
   const add = () => setPairs((ps) => [...ps, { id: Date.now().toString(), label: "", answer: "" }]);
   const remove = (id: string) => setPairs((ps) => ps.filter((p) => p.id !== id));
+  const addFollowCard = () => {
+    const nextIndex = Math.max(images.length, pairs.length);
+    setImages((current) => [...current, getDefaultImageAt(nextIndex)]);
+    setPairs((current) => [
+      ...current,
+      { id: `follow-card-${Date.now()}`, label: "", answer: "" },
+    ]);
+  };
+  const removeFollowCard = (index: number) => {
+    setImages((current) => current.filter((_, imageIndex) => imageIndex !== index));
+    setPairs((current) => current.filter((_, pairIndex) => pairIndex !== index));
+  };
+  const addRolePlayRow = () => {
+    setPairs((current) => {
+      const splitIndex = Math.ceil((fixedPairCount ?? current.length) / 2);
+      const leftPairs = current.slice(0, splitIndex);
+      const rightPairs = current.slice(splitIndex);
+      const timestamp = Date.now();
+      return [
+        ...leftPairs,
+        { id: `role-left-${timestamp}`, label: "", answer: "" },
+        ...rightPairs,
+        { id: `role-right-${timestamp}`, label: "", answer: "" },
+      ];
+    });
+  };
+  const removeRolePlayRow = (index: number) => {
+    setPairs((current) => {
+      const splitIndex = Math.ceil((fixedPairCount ?? current.length) / 2);
+      const leftPairs = current.slice(0, splitIndex);
+      const rightPairs = current.slice(splitIndex);
+      return [
+        ...leftPairs.filter((_, pairIndex) => pairIndex !== index),
+        ...rightPairs.filter((_, pairIndex) => pairIndex !== index),
+      ];
+    });
+  };
 
   const updateImageAtIndex = (index: number, nextImage: string | null) => {
     setImages((current) =>
@@ -3222,19 +3274,41 @@ function SettingsView({
       <div className="cartoon-card border-[#FFCC80] bg-white p-7">
         {usesFixedButtonNames ? (
           <>
-            <h2 className="text-lg font-semibold text-slate-800 mb-1">Follow cards</h2>
-            <p className="text-sm text-slate-500 mb-4">
-              Set each Follow card separately: its image and its button text.
-            </p>
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800 mb-1">Follow cards</h2>
+                <p className="text-sm text-slate-500">
+                  Set each Follow card separately: its image and its button text.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addFollowCard}
+                className="cartoon-button inline-flex items-center gap-2 border-[#66BB6A] bg-[#81C784] px-4 py-2 text-sm font-extrabold text-white shadow-[0_3px_0_#4CAF50]"
+              >
+                <Plus size={16} strokeWidth={3} /> Add card
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               {images.map((image, index) => (
                 <div
                   key={`follow-setting-card-${index}`}
                   className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
                 >
-                  <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Card {index + 1}
-                  </p>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Card {index + 1}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => removeFollowCard(index)}
+                      disabled={images.length <= 1}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35"
+                      aria-label={`Remove card ${index + 1}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                   <div className="h-44 w-full overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-white">
                     {image ? (
                       <img
@@ -3415,43 +3489,61 @@ function SettingsView({
 
       {usesRolePlayColumns && (
         <div className="bg-white rounded-xl border p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-1">Sentences</h2>
-          <p className="text-sm text-slate-500 mb-6">
-            {sentenceEditorHelpText ?? "Edit the sentence buttons shown on the activity page."}
-          </p>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="px-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Left column
-              </div>
-              {rolePlayLeftPairs.map((pair, index) => (
-                <label key={pair.id} className="block text-sm font-medium text-slate-700">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800 mb-1">Sentences</h2>
+              <p className="text-sm text-slate-500">
+                {sentenceEditorHelpText ?? "Edit the sentence buttons shown on the activity page."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addRolePlayRow}
+              className="cartoon-button inline-flex items-center gap-2 border-[#66BB6A] bg-[#81C784] px-4 py-2 text-sm font-extrabold text-white shadow-[0_3px_0_#4CAF50]"
+            >
+              <Plus size={16} strokeWidth={3} /> Add line
+            </button>
+          </div>
+          <div className="grid gap-3 text-xs font-medium uppercase tracking-wide text-slate-500 md:grid-cols-[1fr_1fr_auto]">
+            <div>Left column</div>
+            <div>Right column</div>
+            <div></div>
+          </div>
+          <div className="mt-2 space-y-3">
+            {rolePlayRows.map(({ left, right }, index) => (
+              <div
+                key={`role-play-row-${left?.id ?? "left"}-${right?.id ?? "right"}-${index}`}
+                className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+              >
+                <label className="block text-sm font-medium text-slate-700">
                   Line {index + 1}
                   <input
-                    value={pair.label}
-                    onChange={(e) => update(pair.id, "label", e.target.value)}
+                    value={left?.label ?? ""}
+                    onChange={(e) => left && update(left.id, "label", e.target.value)}
                     placeholder="Look at the tree."
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
                   />
                 </label>
-              ))}
-            </div>
-            <div className="space-y-3">
-              <div className="px-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Right column
-              </div>
-              {rolePlayRightPairs.map((pair, index) => (
-                <label key={pair.id} className="block text-sm font-medium text-slate-700">
+                <label className="block text-sm font-medium text-slate-700">
                   Line {index + 1}
                   <input
-                    value={pair.label}
-                    onChange={(e) => update(pair.id, "label", e.target.value)}
+                    value={right?.label ?? ""}
+                    onChange={(e) => right && update(right.id, "label", e.target.value)}
                     placeholder="The branches are green."
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
                   />
                 </label>
-              ))}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => removeRolePlayRow(index)}
+                  disabled={rolePlayRows.length <= 1}
+                  className="mt-6 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-label={`Remove line ${index + 1}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
