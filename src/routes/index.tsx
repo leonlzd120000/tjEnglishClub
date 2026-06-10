@@ -5,6 +5,7 @@ import {
   Check,
   X,
   Plus,
+  Minus,
   Trash2,
   Home as HomeIcon,
   Settings as SettingsIcon,
@@ -431,6 +432,7 @@ const GENERIC_DEFAULT_LABELS = new Set([
   ...ROLE_PLAY_DEFAULT_PAIRS.map((pair) => pair.label),
 ]);
 const REMOVED_STORAGE_KEYS = ["match-master-stars-v1", "group-work-stars-v1"] as const;
+const UNIT_STAR_COUNTS_KEY = "unit-star-counts-v1";
 
 const WORKSPACES: WorkspaceConfig[] = [
   {
@@ -879,6 +881,7 @@ function usePairs(
 function Index() {
   const [tab, setTab] = useState<"home" | "settings">("home");
   const [workspaceId, setWorkspaceId] = useState<WorkspaceConfig["id"]>(DEFAULT_WORKSPACE_ID);
+  const [unitStarCounts, setUnitStarCounts] = useState<Record<string, number>>({});
   const [unitId, setUnitId] = useStoredChoice(
     UNIT_STORAGE_KEY,
     DEFAULT_LEARNING_UNIT_ID,
@@ -899,6 +902,32 @@ function Index() {
       void error;
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(UNIT_STAR_COUNTS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      setUnitStarCounts(
+        Object.fromEntries(
+          Object.entries(parsed).map(([key, value]) => [
+            key,
+            Math.max(0, Math.min(WORKSPACES.length, Math.trunc(Number(value) || 0))),
+          ]),
+        ),
+      );
+    } catch (error) {
+      void error;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(UNIT_STAR_COUNTS_KEY, JSON.stringify(unitStarCounts));
+    } catch (error) {
+      void error;
+    }
+  }, [unitStarCounts]);
 
   useEffect(() => {
     let cancelled = false;
@@ -951,6 +980,17 @@ function Index() {
     setTab("home");
   };
 
+  const adjustCurrentUnitStars = useCallback(
+    (delta: number) => {
+      setUnitStarCounts((current) => {
+        const currentCount = current[selectedUnit.id] ?? 0;
+        const nextCount = Math.max(0, Math.min(WORKSPACES.length, currentCount + delta));
+        return { ...current, [selectedUnit.id]: nextCount };
+      });
+    },
+    [selectedUnit.id],
+  );
+
   return (
     <div className="min-h-screen lg:flex bg-[#FFF8E7] font-[Fredoka,system-ui]">
       {/* Cute top banner decoration */}
@@ -962,6 +1002,9 @@ function Index() {
           workspace={workspace}
           unitId={selectedUnit.id}
           onSelectUnit={setUnitId}
+          starCount={unitStarCounts[selectedUnit.id] ?? 0}
+          onAddStar={() => adjustCurrentUnitStars(1)}
+          onRemoveStar={() => adjustCurrentUnitStars(-1)}
           tab={tab}
           setTab={setTab}
         />
@@ -974,12 +1017,18 @@ function WorkspacePage({
   workspace,
   unitId,
   onSelectUnit,
+  starCount,
+  onAddStar,
+  onRemoveStar,
   tab,
   setTab,
 }: {
   workspace: WorkspaceConfig;
   unitId: string;
   onSelectUnit: React.Dispatch<React.SetStateAction<string>>;
+  starCount: number;
+  onAddStar: () => void;
+  onRemoveStar: () => void;
   tab: "home" | "settings";
   setTab: React.Dispatch<React.SetStateAction<"home" | "settings">>;
 }) {
@@ -990,6 +1039,9 @@ function WorkspacePage({
         defaultTitle={workspace.defaultTitle}
         selectedUnitId={unitId}
         onSelectUnit={onSelectUnit}
+        starCount={starCount}
+        onAddStar={onAddStar}
+        onRemoveStar={onRemoveStar}
         tab={tab}
         setTab={setTab}
       >
@@ -1084,6 +1136,9 @@ function WorkspacePage({
       defaultTitle={workspace.defaultTitle}
       selectedUnitId={unitId}
       onSelectUnit={onSelectUnit}
+      starCount={starCount}
+      onAddStar={onAddStar}
+      onRemoveStar={onRemoveStar}
       tab={tab}
       setTab={setTab}
     >
@@ -1143,6 +1198,9 @@ function WorkspaceShell({
   defaultTitle,
   selectedUnitId,
   onSelectUnit,
+  starCount,
+  onAddStar,
+  onRemoveStar,
   tab,
   setTab,
   children,
@@ -1151,10 +1209,15 @@ function WorkspaceShell({
   defaultTitle: string;
   selectedUnitId: string;
   onSelectUnit: React.Dispatch<React.SetStateAction<string>>;
+  starCount: number;
+  onAddStar: () => void;
+  onRemoveStar: () => void;
   tab: "home" | "settings";
   setTab: React.Dispatch<React.SetStateAction<"home" | "settings">>;
   children: React.ReactNode;
 }) {
+  const clampedStarCount = Math.max(0, Math.min(WORKSPACES.length, starCount));
+
   return (
     <>
       <header className="border-b-4 border-[#FFCC80] bg-white/95 backdrop-blur-xl lg:fixed lg:inset-x-0 lg:top-0 lg:z-40 shadow-[0_4px_0_#FFE082]">
@@ -1189,10 +1252,50 @@ function WorkspaceShell({
                 </button>
               </h1>
             </div>
+
           </div>
 
           {/* Fun Home / Settings tabs */}
-          <nav className="flex gap-2 rounded-full bg-[#FFF3D9] p-1.5 border-4 border-[#FFCC80] shadow-inner">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-1.5 rounded-full border-4 border-[#FFCC80] bg-[#FFF3D9] px-2 py-1 shadow-inner"
+              aria-label={`Unit stars: ${clampedStarCount} of ${WORKSPACES.length}`}
+            >
+              <button
+                type="button"
+                onClick={onRemoveStar}
+                disabled={clampedStarCount === 0}
+                className="cartoon-button inline-flex h-8 w-8 items-center justify-center border-[#FFCC80] bg-white text-[#5C4A35] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Remove one star"
+              >
+                <Minus size={15} strokeWidth={3} />
+              </button>
+              <div className="flex min-w-[92px] justify-center gap-0.5 text-xl leading-none">
+                {WORKSPACES.map((workspace) => (
+                  <span
+                    key={workspace.id}
+                    className={
+                      WORKSPACES.findIndex((item) => item.id === workspace.id) < clampedStarCount
+                        ? "text-[#FFD54F] drop-shadow-[0_1px_0_#C47E00]"
+                        : "text-[#D8C7A8]"
+                    }
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={onAddStar}
+                disabled={clampedStarCount === WORKSPACES.length}
+                className="cartoon-button inline-flex h-8 w-8 items-center justify-center border-[#FFCC80] bg-white text-[#5C4A35] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Add one star"
+              >
+                <Plus size={15} strokeWidth={3} />
+              </button>
+            </div>
+
+            <nav className="flex gap-2 rounded-full bg-[#FFF3D9] p-1.5 border-4 border-[#FFCC80] shadow-inner">
             <button
               onClick={() => setTab("home")}
               className={`cartoon-button flex items-center gap-2 px-6 py-2.5 text-base font-bold transition ${
@@ -1213,7 +1316,8 @@ function WorkspaceShell({
             >
               <SettingsIcon size={18} /> Settings
             </button>
-          </nav>
+            </nav>
+          </div>
         </div>
       </header>
       <main className={`${APP_FRAME_MAX_WIDTH_CLASS} mx-auto px-6 py-5 lg:pt-[110px]`}>
@@ -1285,7 +1389,7 @@ function WorkspaceMenu({
 }) {
   // Fun cartoon icons for each activity
   const workspaceEmojis: Record<string, string> = {
-    "follow-work": "🚶‍♂️",
+    "follow-work": "👂",
     "match-master": "🧩",
     "group-work": "📖",
     "role-play-work": "🎭",
@@ -2389,13 +2493,13 @@ function GameView({
                     <button
                       type="button"
                       onClick={() => speakFollowLabel(followCardLabels[index], index)}
-                      className={`cartoon-button inline-flex min-h-12 w-full items-center justify-center gap-1.5 border-4 px-2.5 py-2 text-sm font-extrabold text-[#2F2A1F] shadow-[0_4px_0_#2BA3D4] active:translate-y-0.5 transition ${
+                      className={`cartoon-button inline-flex min-h-12 w-full items-center justify-center gap-1 border-4 px-1.5 py-2 text-[11px] font-extrabold text-[#2F2A1F] shadow-[0_4px_0_#2BA3D4] active:translate-y-0.5 transition xl:px-2.5 xl:text-sm ${
                         speakingCardIndex === index
                           ? "border-[#4FC3F7] bg-white shadow-[0_0_0_2px_rgba(79,195,247,0.18)]"
                           : "border-[#FFE082] bg-[#FFFDE7] hover:border-[#4FC3F7] hover:bg-white"
                       }`}
                     >
-                      <span className="block min-w-0 whitespace-nowrap leading-none tracking-normal">
+                      <span className="block min-w-0 whitespace-nowrap leading-none tracking-[-0.01em]">
                         {followCardLabels[index]}
                       </span>
                       {speakingCardIndex === index && (
